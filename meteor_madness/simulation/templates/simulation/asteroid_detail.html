@@ -1,0 +1,362 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2">{{ asteroid.name }}</h1>
+        <p class="text-gray-300">Asteroid ID: {{ asteroid.neo_id }}</p>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Asteroid Details -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-white mb-4">Asteroid Information</h2>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Approach Date:</span>
+                    <span class="text-white">
+                        {% if asteroid.close_approach_datetime %}
+                            {{ asteroid.close_approach_datetime|date:"Y-m-d H:i" }} UTC
+                        {% else %}
+                            {{ asteroid.close_approach_date }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Velocity:</span>
+                    <span class="text-white">{{ asteroid.relative_velocity_kmh|floatformat:0 }} km/h</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Miss Distance:</span>
+                    <span class="text-white">{{ asteroid.miss_distance_km|floatformat:0 }} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Diameter:</span>
+                    <span class="text-white">
+                        {{ asteroid.estimated_diameter_min_km|floatformat:2 }} - 
+                        {{ asteroid.estimated_diameter_max_km|floatformat:2 }} km
+                    </span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Potentially Hazardous:</span>
+                    <span class="{% if asteroid.is_potentially_hazardous %}text-red-400{% else %}text-green-400{% endif %}">
+                        {% if asteroid.is_potentially_hazardous %}Yes{% else %}No{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Assessment -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-white mb-4">Impact Assessment</h2>
+            {% if has_collision_data %}
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Impact Probability:</span>
+                        <span class="text-{% if impact_probability_pct > 50 %}red{% elif impact_probability_pct > 20 %}yellow{% else %}green{% endif %}-400 font-bold">
+                            {{ impact_probability_pct }}%
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Predicted Location:</span>
+                        <span class="text-white text-sm">{{ asteroid.predicted_impact_location }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Coordinates:</span>
+                        <span class="text-white text-sm">
+                            {{ asteroid.predicted_impact_latitude|floatformat:2 }}°N, 
+                            {{ asteroid.predicted_impact_longitude|floatformat:2 }}°E
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Impact Energy:</span>
+                        <span class="text-white">{{ asteroid.impact_energy_megatons|floatformat:1 }} MT</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Crater Size:</span>
+                        <span class="text-white">{{ asteroid.crater_diameter_km|floatformat:1 }} km</span>
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-gray-400">No collision data available</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Interactive Map -->
+    {% if has_collision_data %}
+    <div class="bg-gray-800 p-6 rounded-lg mb-8">
+        <h2 class="text-2xl font-bold text-white mb-4">Predicted Impact Location</h2>
+        <div id="impact-map" class="w-full h-96 rounded-lg border-2 border-gray-500 shadow-lg bg-gray-700 flex items-center justify-center relative">
+            <div class="text-gray-400">Loading map...</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Impact Effects Details -->
+    {% if has_collision_data %}
+    <div class="bg-gray-800 p-6 rounded-lg mb-8">
+        <h2 class="text-2xl font-bold text-white mb-4">Impact Effects Analysis</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gray-700 p-4 rounded-lg text-center">
+                <h3 class="text-lg font-bold text-white mb-2">Severity</h3>
+                <p class="text-{% if impact_effects.severity == 'Catastrophic' %}red{% elif impact_effects.severity == 'Major' %}orange{% elif impact_effects.severity == 'Moderate' %}yellow{% else %}green{% endif %}-400 font-bold">
+                    {{ impact_effects.severity }}
+                </p>
+            </div>
+            <div class="bg-gray-700 p-4 rounded-lg text-center">
+                <h3 class="text-lg font-bold text-white mb-2">Crater Diameter</h3>
+                <p class="text-white">{{ impact_effects.crater_diameter_km|floatformat:1 }} km</p>
+            </div>
+            <div class="bg-gray-700 p-4 rounded-lg text-center">
+                <h3 class="text-lg font-bold text-white mb-2">Blast Radius</h3>
+                <p class="text-white">{{ impact_effects.blast_radius_km|floatformat:0 }} km</p>
+            </div>
+            <div class="bg-gray-700 p-4 rounded-lg text-center">
+                <h3 class="text-lg font-bold text-white mb-2">Seismic Radius</h3>
+                <p class="text-white">{{ impact_effects.seismic_radius_km|floatformat:0 }} km</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-gray-300">{{ impact_effects.description }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="flex justify-between items-center">
+        <a href="{% url 'asteroid_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+            ← Back to Asteroid List
+        </a>
+        <a href="{% url 'simulator' %}?asteroid_id={{ asteroid.neo_id }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+            Run Simulation →
+        </a>
+    </div>
+</div>
+
+<!-- Map Scripts -->
+{% if has_collision_data %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+.impact-legend {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.impact-legend h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fbbf24;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.probability-badge {
+    background: linear-gradient(45deg, #ef4444, #f97316);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border: 1px solid white;
+}
+
+.impact-zone {
+    opacity: 0.3;
+    stroke-width: 2;
+    stroke-opacity: 0.8;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Starting enhanced map initialization...');
+    
+    // Check if Leaflet loaded
+    if (typeof L === 'undefined') {
+        console.error('Leaflet not loaded');
+        document.getElementById('impact-map').innerHTML = '<div class="text-red-500 p-4">Map library failed to load</div>';
+        return;
+    }
+    
+    // Check if container exists
+    const mapDiv = document.getElementById('impact-map');
+    if (!mapDiv) {
+        console.error('Map container not found');
+        return;
+    }
+    
+    try {
+        // Create enhanced map
+        const map = L.map('impact-map', {
+            zoomControl: true,
+            attributionControl: true
+        }).setView([{{ asteroid.predicted_impact_latitude }}, {{ asteroid.predicted_impact_longitude }}], 6);
+        
+        // Add beautiful tile layers
+        const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors, © CARTO',
+            maxZoom: 18,
+            subdomains: 'abcd'
+        });
+        
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        });
+        
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri',
+            maxZoom: 18
+        });
+        
+        // Add default layer
+        cartoVoyager.addTo(map);
+        
+        // Layer control
+        const baseMaps = {
+            "CartoDB Voyager": cartoVoyager,
+            "OpenStreetMap": osmLayer,
+            "Satellite": satelliteLayer
+        };
+        
+        L.control.layers(baseMaps).addTo(map);
+        
+        // Get impact data
+        const probabilityPercent = {{ asteroid.impact_probability|floatformat:1 }};
+        const impactLat = {{ asteroid.predicted_impact_latitude }};
+        const impactLon = {{ asteroid.predicted_impact_longitude }};
+        
+        // Determine impact point color based on probability
+        let impactColor = '#22c55e'; // green
+        let probabilityClass = 'low';
+        if (probabilityPercent > 50) {
+            impactColor = '#ef4444'; // red
+            probabilityClass = 'very-high';
+        } else if (probabilityPercent > 20) {
+            impactColor = '#f97316'; // orange
+            probabilityClass = 'high';
+        } else if (probabilityPercent > 5) {
+            impactColor = '#eab308'; // yellow
+            probabilityClass = 'medium';
+        }
+        
+        // Create impact zones
+        const blastRadius = {{ impact_effects.blast_radius_km|floatformat:0 }} * 1000;
+        const thermalRadius = {{ impact_effects.thermal_radius_km|floatformat:0 }} * 1000;
+        const seismicRadius = {{ impact_effects.seismic_radius_km|floatformat:0 }} * 1000;
+        
+        // Blast zone (innermost)
+        L.circle([impactLat, impactLon], {
+            color: '#fbbf24',
+            fillColor: '#fbbf24',
+            fillOpacity: 0.4,
+            radius: blastRadius,
+            weight: 3,
+            className: 'impact-zone'
+        }).addTo(map);
+        
+        // Thermal zone (middle)
+        L.circle([impactLat, impactLon], {
+            color: '#f97316',
+            fillColor: '#f97316',
+            fillOpacity: 0.3,
+            radius: thermalRadius,
+            weight: 2,
+            className: 'impact-zone'
+        }).addTo(map);
+        
+        // Seismic zone (outermost)
+        L.circle([impactLat, impactLon], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            radius: seismicRadius,
+            weight: 2,
+            className: 'impact-zone'
+        }).addTo(map);
+        
+        // Use default Leaflet pointer marker for impact location
+        const impactMarker = L.marker([impactLat, impactLon]).addTo(map);
+        
+        // Enhanced popup content
+        const popupContent = '<div style="text-align: center; padding: 8px; min-width: 200px;">' +
+            '<h3 style="margin: 0 0 8px 0; color: #1f2937; font-weight: bold;">{{ asteroid.name }}</h3>' +
+            '<div style="background: ' + impactColor + '; color: white; padding: 4px 8px; border-radius: 12px; margin: 4px 0; font-weight: bold;">' +
+            'Impact Probability: ' + probabilityPercent + '%' +
+            '</div>' +
+            '<div style="font-size: 12px; color: #6b7280; margin-top: 8px;">' +
+            '<p><strong>Impact Energy:</strong> {{ asteroid.impact_energy_megatons|floatformat:1 }} MT</p>' +
+            '<p><strong>Crater Size:</strong> {{ asteroid.crater_diameter_km|floatformat:1 }} km</p>' +
+            '<p><strong>Coordinates:</strong> {{ asteroid.predicted_impact_latitude|floatformat:2 }}°N, {{ asteroid.predicted_impact_longitude|floatformat:2 }}°E</p>' +
+            '<p><strong>Velocity:</strong> {{ asteroid.relative_velocity_kmh|floatformat:0 }} km/h</p>' +
+            '</div>' +
+            '</div>';
+        
+        impactMarker.bindPopup(popupContent).openPopup();
+        
+        // Create beautiful legend
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'impact-legend');
+            div.innerHTML = 
+                '<h4>🌠 Impact Zones</h4>' +
+                '<div class="legend-item">' +
+                '<div class="legend-color" style="background: ' + impactColor + ';"></div>' +
+                '<span>Impact Point (' + probabilityPercent + '%)</span>' +
+                '</div>' +
+                '<div class="legend-item">' +
+                '<div class="legend-color" style="background: #fbbf24;"></div>' +
+                '<span>Blast Zone ({{ impact_effects.blast_radius_km|floatformat:0 }} km)</span>' +
+                '</div>' +
+                '<div class="legend-item">' +
+                '<div class="legend-color" style="background: #f97316;"></div>' +
+                '<span>Thermal Zone ({{ impact_effects.thermal_radius_km|floatformat:0 }} km)</span>' +
+                '</div>' +
+                '<div class="legend-item">' +
+                '<div class="legend-color" style="background: #ef4444;"></div>' +
+                '<span>Seismic Zone ({{ impact_effects.seismic_radius_km|floatformat:0 }} km)</span>' +
+                '</div>';
+            return div;
+        };
+        legend.addTo(map);
+        
+        // Add scale control
+        L.control.scale({
+            position: 'bottomleft',
+            metric: true,
+            imperial: false
+        }).addTo(map);
+        
+        console.log('Enhanced map created successfully');
+        
+    } catch (error) {
+        console.error('Map creation failed:', error);
+        document.getElementById('impact-map').innerHTML = '<div class="text-red-500 p-4">Map failed to load: ' + error.message + '</div>';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

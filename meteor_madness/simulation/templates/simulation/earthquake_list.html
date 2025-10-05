@@ -1,0 +1,87 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-4xl font-bold">
+        <i class="fas fa-wave-square mr-2"></i>Earthquakes ({{ total_count }})
+    </h1>
+    <div class="flex gap-3">
+        <a href="{% url 'fetch_earthquakes' %}" 
+           class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-2 rounded-lg font-bold">
+            <i class="fas fa-sync-alt mr-2"></i>Fetch from USGS
+        </a>
+    </div>
+</div>
+
+<div class="bg-gray-800 p-4 rounded-lg mb-6">
+    <h3 class="font-bold mb-3">Filters</h3>
+    <div class="flex gap-4 flex-wrap">
+        <a href="{% url 'earthquake_list' %}" 
+           class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">
+            All ({{ total_count }})
+        </a>
+        <a href="{% url 'earthquake_list' %}?tsunami=true" 
+           class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg">
+            <i class="fas fa-water mr-1"></i>Tsunami ({{ tsunami_count }})
+        </a>
+        <a href="{% url 'earthquake_list' %}?min_magnitude=6.0" 
+           class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-1"></i>M6.0+
+        </a>
+        <a href="{% url 'earthquake_list' %}?min_magnitude=7.0" 
+           class="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg">
+            <i class="fas fa-bolt mr-1"></i>M7.0+
+        </a>
+    </div>
+</div>
+
+<div class="grid gap-4">
+    {% for earthquake in earthquakes %}
+    <div class="bg-gray-800 p-6 rounded-lg card-hover">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-3xl font-bold {% if earthquake.magnitude >= 7 %}text-red-500{% elif earthquake.magnitude >= 6 %}text-orange-500{% elif earthquake.magnitude >= 5 %}text-yellow-500{% else %}text-green-500{% endif %}">
+                        M{{ earthquake.magnitude }}
+                    </span>
+                    {% if earthquake.tsunami %}
+                    <span class="bg-blue-600 px-3 py-1 rounded text-sm font-bold animate-pulse">
+                        <i class="fas fa-water mr-1"></i>TSUNAMI
+                    </span>
+                    {% endif %}
+                </div>
+                <h3 class="text-xl font-bold mb-2">{{ earthquake.place }}</h3>
+                <div class="grid grid-cols-2 gap-2 text-gray-300 text-sm">
+                    <p><i class="fas fa-clock mr-2"></i>{{ earthquake.time|date:"Y-m-d H:i:s" }} UTC</p>
+                    <p><i class="fas fa-map-marker-alt mr-2"></i>{{ earthquake.latitude|floatformat:3 }}°, {{ earthquake.longitude|floatformat:3 }}°</p>
+                    <p><i class="fas fa-arrows-alt-v mr-2"></i>Depth: {{ earthquake.depth_km|floatformat:1 }} km</p>
+                    {% if earthquake.alert_level %}
+                    <p><i class="fas fa-bell mr-2"></i>Alert: {{ earthquake.alert_level|upper }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+            <a href="{% url 'earthquake_detail' earthquake.usgs_id %}" 
+               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+                <i class="fas fa-info-circle mr-1"></i>Details
+            </a>
+            {% if earthquake.url %}
+            <a href="{{ earthquake.url }}" target="_blank"
+               class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+                <i class="fas fa-external-link-alt mr-1"></i>USGS Report
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-gray-800 p-8 rounded-lg text-center">
+        <i class="fas fa-wave-square text-6xl text-gray-600 mb-4"></i>
+        <p class="text-xl mb-4">No earthquakes found.</p>
+        <a href="{% url 'fetch_earthquakes' %}" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 py-3 rounded-lg font-bold">
+            <i class="fas fa-download mr-2"></i>Fetch Data from USGS
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

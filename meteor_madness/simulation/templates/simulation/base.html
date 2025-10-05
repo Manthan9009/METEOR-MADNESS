@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Meteor Madness{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .space-bg {
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .hazard-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen space-bg text-white">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center hover:opacity-90 transition-opacity">
+                        <i class="fas fa-meteor text-yellow-400 text-2xl mr-2"></i>
+                        <span class="orbitron text-xl font-bold text-white">Meteor Madness</span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-1">
+                    {% url 'home' as home_url %}
+                    <a href="{{ home_url }}" class="{% if request.path == home_url %}bg-white/10{% endif %} text-white hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center">
+                        <i class="fas fa-home mr-2"></i> Home
+                    </a>
+                    
+                    {% url 'asteroid_list' as asteroid_url %}
+                    <a href="{{ asteroid_url }}" class="{% if request.path == asteroid_url or request.path|slice:':15' == '/asteroids/detail' %}bg-white/10{% endif %} text-white hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center">
+                        <i class="fas fa-meteor mr-2"></i> Asteroids
+                    </a>
+                    
+                    {% url 'earthquake_list' as earthquake_url %}
+                    <a href="{{ earthquake_url }}" class="{% if request.path == earthquake_url or request.path|slice:':19' == '/earthquakes/detail' %}bg-white/10{% endif %} text-white hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center">
+                        <i class="fas fa-wave-square mr-2"></i> Earthquakes
+                    </a>
+                    
+                    {% url 'simulator' as simulator_url %}
+                    <a href="{{ simulator_url }}" class="{% if request.path == simulator_url %}bg-white/10{% endif %} text-white hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center">
+                        <i class="fas fa-calculator mr-2"></i> Simulator
+                    </a>
+                    
+                    {% url 'apod' as apod_url %}
+                    <a href="{{ apod_url }}" class="{% if request.path == apod_url %}bg-white/10{% endif %} text-white hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center">
+                        <i class="fas fa-image mr-2"></i> APOD
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button type="button" class="text-white hover:text-gray-200 focus:outline-none" id="mobile-menu-button">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div class="md:hidden hidden pb-4" id="mobile-menu">
+                <div class="flex flex-col space-y-2">
+                    {% url 'home' as home_url %}
+                    <a href="{{ home_url }}" class="{% if request.path == home_url %}bg-white/20{% else %}hover:bg-white/10{% endif %} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                        <i class="fas fa-home mr-3 w-5 text-center"></i> Home
+                    </a>
+                    
+                    {% url 'asteroid_list' as asteroid_url %}
+                    <a href="{{ asteroid_url }}" class="{% if request.path == asteroid_url or request.path|slice:':15' == '/asteroids/detail' %}bg-white/20{% else %}hover:bg-white/10{% endif %} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                        <i class="fas fa-meteor mr-3 w-5 text-center"></i> Asteroids
+                    </a>
+                    
+                    {% url 'earthquake_list' as earthquake_url %}
+                    <a href="{{ earthquake_url }}" class="{% if request.path == earthquake_url or request.path|slice:':19' == '/earthquakes/detail' %}bg-white/20{% else %}hover:bg-white/10{% endif %} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                        <i class="fas fa-wave-square mr-3 w-5 text-center"></i> Earthquakes
+                    </a>
+                    
+                    {% url 'simulator' as simulator_url %}
+                    <a href="{{ simulator_url }}" class="{% if request.path == simulator_url %}bg-white/20{% else %}hover:bg-white/10{% endif %} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                        <i class="fas fa-calculator mr-3 w-5 text-center"></i> Simulator
+                    </a>
+                    
+                    {% url 'apod' as apod_url %}
+                    <a href="{{ apod_url }}" class="{% if request.path == apod_url %}bg-white/20{% else %}hover:bg-white/10{% endif %} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                        <i class="fas fa-image mr-3 w-5 text-center"></i> APOD
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile menu script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}bg-red-500{% elif message.tags == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} text-white px-6 py-4 rounded-lg shadow-lg mb-4">
+            <div class="flex items-center">
+                <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                <span>{{ message }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="gradient-bg mt-16 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-white orbitron">
+                <i class="fas fa-rocket mr-2"></i>
+                Powered by NASA API | CODESPHERES &copy; 2025
+            </p>
+            <p class="text-gray-200 text-sm mt-2">
+                Tracking Near-Earth Objects for a safer tomorrow
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

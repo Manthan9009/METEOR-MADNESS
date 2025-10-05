@@ -1,0 +1,603 @@
+{% extends 'simulation/base.html' %}
+
+{% block title %}Impact Simulator - Meteor Madness{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold orbitron mb-8 text-center">
+        <i class="fas fa-calculator mr-3"></i>Impact Simulator
+    </h1>
+
+    {% if asteroid %}
+    <div class="bg-blue-900 p-4 rounded-lg mb-6">
+        <h3 class="text-lg font-bold mb-2">
+            <i class="fas fa-meteor mr-2"></i>Simulating: {{ asteroid.name }}
+        </h3>
+        <p class="text-sm text-gray-300">
+            Diameter: {{ asteroid.estimated_diameter_min_km|floatformat:3 }} - {{ asteroid.estimated_diameter_max_km|floatformat:3 }} km | 
+            Velocity: {{ asteroid.relative_velocity_kmh|floatformat:0 }} km/h
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Simulation Mode Tabs -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-6">
+        <div class="flex space-x-4">
+            <button id="basicModeBtn" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg font-bold transition">
+                <i class="fas fa-calculator mr-2"></i>Basic Impact
+            </button>
+            <button id="keplerianModeBtn" class="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold transition">
+                <i class="fas fa-orbit mr-2"></i>Keplerian Orbital
+            </button>
+        </div>
+    </div>
+
+    <!-- Basic Simulation Form -->
+    <div id="basicSimulation" class="bg-gray-800 rounded-lg p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-6">Basic Impact Simulation</h2>
+        
+        <form id="simulationForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold mb-2">Asteroid Diameter (km)</label>
+                    <input type="number" id="diameter" step="any" value="1.0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Velocity (km/h)</label>
+                    <input type="number" id="velocity" step="any" value="50000" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Latitude</label>
+                    <input type="number" id="latitude" step="0.0001" value="40.7128" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Longitude</label>
+                    <input type="number" id="longitude" step="0.0001" value="-74.0060" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Population Density (per km²)</label>
+                    <input type="number" id="population" step="100" value="10000" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-8 py-4 rounded-lg text-lg font-bold transition">
+                <i class="fas fa-rocket mr-2"></i>Run Simulation
+            </button>
+        </form>
+    </div>
+
+    <!-- Keplerian Orbital Simulation Form -->
+    <div id="keplerianSimulation" class="bg-gray-800 rounded-lg p-8 mb-8 hidden">
+        <h2 class="text-2xl font-bold mb-4">Keplerian Orbital Mechanics</h2>
+        <p class="text-gray-300 mb-6 text-sm">
+            <i class="fas fa-info-circle mr-2"></i>
+            Calculate real-time impact predictions using Kepler's laws of planetary motion. 
+            Enter orbital elements to predict trajectory and closest approach to Earth.
+        </p>
+        
+        <form id="keplerianForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Semi-major Axis (AU)
+                        <span class="text-gray-400 font-normal">- Orbital size</span>
+                    </label>
+                    <input type="number" id="semi_major_axis" step="0.01" value="2.5" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Eccentricity (0-1)
+                        <span class="text-gray-400 font-normal">- Orbital shape</span>
+                    </label>
+                    <input type="number" id="eccentricity" step="0.01" value="0.2" min="0" max="0.99"
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Inclination (degrees)
+                        <span class="text-gray-400 font-normal">- Orbital tilt</span>
+                    </label>
+                    <input type="number" id="inclination" step="0.1" value="10.0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Ascending Node (degrees)
+                        <span class="text-gray-400 font-normal">- Ω</span>
+                    </label>
+                    <input type="number" id="ascending_node" step="1" value="0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Argument of Periapsis (degrees)
+                        <span class="text-gray-400 font-normal">- ω</span>
+                    </label>
+                    <input type="number" id="periapsis_arg" step="1" value="0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">
+                        Mean Anomaly (degrees)
+                        <span class="text-gray-400 font-normal">- M₀</span>
+                    </label>
+                    <input type="number" id="mean_anomaly" step="1" value="0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Asteroid Diameter (km)</label>
+                    <input type="text" 
+                           id="kepler_diameter" 
+                           inputmode="decimal"
+                           pattern="[0-9]*[.,]?[0-9]*"
+                           value="1.0" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white"
+                           oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\./g, '$1');">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Prediction Duration (days)</label>
+                    <input type="number" id="duration_days" step="1" value="365" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 px-8 py-4 rounded-lg text-lg font-bold transition">
+                <i class="fas fa-orbit mr-2"></i>Calculate Orbital Trajectory
+            </button>
+        </form>
+    </div>
+
+    <div id="results" class="hidden">
+        <div class="bg-gray-800 rounded-lg p-8">
+            <h2 class="text-3xl font-bold mb-6 orbitron">Simulation Results</h2>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <div id="loading" class="hidden text-center py-8">
+        <i class="fas fa-spinner fa-spin text-4xl text-purple-500"></i>
+        <p class="mt-4 text-xl">Running simulation...</p>
+    </div>
+</div>
+
+<script>
+// Mode switching
+document.getElementById('basicModeBtn').addEventListener('click', () => {
+    document.getElementById('basicSimulation').classList.remove('hidden');
+    document.getElementById('keplerianSimulation').classList.add('hidden');
+    document.getElementById('basicModeBtn').className = 'flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg font-bold transition';
+    document.getElementById('keplerianModeBtn').className = 'flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold transition';
+});
+
+document.getElementById('keplerianModeBtn').addEventListener('click', () => {
+    document.getElementById('basicSimulation').classList.add('hidden');
+    document.getElementById('keplerianSimulation').classList.remove('hidden');
+    document.getElementById('keplerianModeBtn').className = 'flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg font-bold transition';
+    document.getElementById('basicModeBtn').className = 'flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold transition';
+});
+
+{% if asteroid %}
+window.addEventListener('DOMContentLoaded', () => {
+    // Calculate average diameter - use exact values
+    const minDiameter = parseFloat('{{ asteroid.estimated_diameter_min_km|default:"1.0" }}');
+    const maxDiameter = parseFloat('{{ asteroid.estimated_diameter_max_km|default:"1.0" }}');
+    const avgDiameter = (minDiameter + maxDiameter) / 2;
+    const velocity = parseFloat('{{ asteroid.relative_velocity_kmh|default:"50000" }}');
+    
+    document.getElementById('diameter').value = avgDiameter;
+    document.getElementById('velocity').value = velocity;
+    document.getElementById('kepler_diameter').value = avgDiameter;
+});
+{% endif %}
+
+// Basic simulation form
+document.getElementById('simulationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    
+    loading.classList.remove('hidden');
+    results.classList.add('hidden');
+    
+    const data = {
+        diameter_km: parseFloat(document.getElementById('diameter').value),
+        velocity_kmh: parseFloat(document.getElementById('velocity').value),
+        latitude: parseFloat(document.getElementById('latitude').value),
+        longitude: parseFloat(document.getElementById('longitude').value),
+        population_density: parseInt(document.getElementById('population').value)
+    };
+    
+    try {
+        const response = await fetch('/api/simulate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayResults(result.simulation);
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error running simulation: ' + error.message);
+    } finally {
+        loading.classList.add('hidden');
+    }
+});
+
+// Function to run the Keplerian simulation
+async function runKeplerianSimulation() {
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    
+    loading.classList.remove('hidden');
+    results.classList.add('hidden');
+    
+    const data = {
+        semi_major_axis_au: parseFloat(document.getElementById('semi_major_axis').value),
+        eccentricity: parseFloat(document.getElementById('eccentricity').value),
+        inclination_deg: parseFloat(document.getElementById('inclination').value),
+        ascending_node_deg: parseFloat(document.getElementById('ascending_node').value),
+        periapsis_arg_deg: parseFloat(document.getElementById('periapsis_arg').value),
+        mean_anomaly_deg: parseFloat(document.getElementById('mean_anomaly').value),
+        diameter_km: parseFloat(document.getElementById('kepler_diameter').value),
+        duration_days: parseInt(document.getElementById('duration_days').value)
+    };
+    
+    try {
+        const response = await fetch('/api/keplerian/realtime-impact/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayKeplerianResults(result);
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error running Keplerian simulation: ' + error.message);
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+// Keplerian orbital simulation form
+document.getElementById('keplerianForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await runKeplerianSimulation();
+});
+
+// Automatically update simulation when any input changes in the keplerian form
+const keplerianInputs = document.querySelectorAll('#keplerianForm input[type="number"]');
+keplerianInputs.forEach(input => {
+    input.addEventListener('input', debounce(async () => {
+        if (!document.getElementById('keplerianSimulation').classList.contains('hidden')) {
+            await runKeplerianSimulation();
+        }
+    }, 500)); // 500ms debounce to prevent too many rapid updates
+});
+
+// Debounce function to limit how often a function can be called
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function displayResults(sim) {
+    const content = document.getElementById('resultsContent');
+    
+    const severityColors = {
+        'Minor': 'bg-green-600',
+        'Moderate': 'bg-yellow-600',
+        'Major': 'bg-orange-600',
+        'Severe': 'bg-red-600',
+        'Extinction Level Event': 'bg-purple-900'
+    };
+    
+    content.innerHTML = `
+        <div class="mb-6 p-4 ${severityColors[sim.severity]} rounded-lg">
+            <h3 class="text-2xl font-bold">Severity: ${sim.severity}</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-meteor mr-2"></i>Impact Energy</h4>
+                <p class="text-3xl font-bold text-yellow-400">${sim.impact_energy.megatons} MT</p>
+                <p class="text-sm text-gray-300 mt-2">
+                    ${sim.impact_energy.hiroshima_equivalent.toLocaleString()} × Hiroshima
+                </p>
+            </div>
+            
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-circle-notch mr-2"></i>Crater Size</h4>
+                <p class="text-3xl font-bold text-blue-400">${sim.crater.diameter_km} km</p>
+                <p class="text-sm text-gray-300 mt-2">Depth: ${sim.crater.depth_km} km</p>
+            </div>
+        </div>
+        
+        <div class="bg-gray-700 p-4 rounded-lg mb-6">
+            <h4 class="font-bold text-lg mb-3"><i class="fas fa-explosion mr-2"></i>Blast Effects</h4>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span>Total Destruction:</span>
+                    <span class="font-bold text-red-400">${sim.blast_effects.total_destruction_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Severe Damage:</span>
+                    <span class="font-bold text-orange-400">${sim.blast_effects.severe_damage_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Moderate Damage:</span>
+                    <span class="font-bold text-yellow-400">${sim.blast_effects.moderate_damage_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Light Damage:</span>
+                    <span class="font-bold text-green-400">${sim.blast_effects.light_damage_km} km</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-users mr-2"></i>Estimated Casualties</h4>
+                <p class="text-3xl font-bold text-red-400">${sim.casualties.estimated.toLocaleString()}</p>
+            </div>
+            
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-wave-square mr-2"></i>Seismic Magnitude</h4>
+                <p class="text-3xl font-bold text-purple-400">${sim.seismic_effects.magnitude}</p>
+                <p class="text-sm text-gray-300 mt-2">${sim.seismic_effects.description}</p>
+            </div>
+        </div>
+        
+        ${sim.tsunami_risk.risk_level !== 'None' ? `
+        <div class="bg-blue-900 p-4 rounded-lg mb-6">
+            <h4 class="font-bold text-lg mb-2"><i class="fas fa-water mr-2"></i>Tsunami Risk</h4>
+            <p class="text-xl font-bold">${sim.tsunami_risk.risk_level}</p>
+            <p class="text-sm mt-2">Wave Height: ${sim.tsunami_risk.wave_height_m} m</p>
+            <p class="text-sm">Affected Radius: ${sim.tsunami_risk.affected_radius_km} km</p>
+        </div>
+        ` : ''}
+        
+        <div class="bg-gray-700 p-4 rounded-lg">
+            <h4 class="font-bold text-lg mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Location Assessment</h4>
+            <p><strong>Ocean Impact:</strong> ${sim.impact_location.is_ocean_impact ? 'Yes' : 'No'}</p>
+            <p><strong>Seismic Zone:</strong> ${sim.location_assessment.seismic_zone.zone_name}</p>
+            <p><strong>Seismic Risk:</strong> ${sim.location_assessment.seismic_zone.seismic_risk}</p>
+            <p><strong>Overall Risk:</strong> ${sim.location_assessment.overall_risk}</p>
+        </div>
+    `;
+    
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayKeplerianResults(data) {
+    const content = document.getElementById('resultsContent');
+    
+    const orbital = data.orbital_summary;
+    const predictions = data.predictions;
+    const impact = data.impact_scenario;
+    
+    if (!predictions || predictions.length === 0) {
+        console.error('No prediction data received:', data);
+        content.innerHTML = `
+            <div class="bg-red-900 p-4 rounded-lg mb-6">
+                <h3 class="text-xl font-bold">Error: No prediction data</h3>
+                <p class="mt-2">The server returned an empty or invalid response.</p>
+                <pre class="mt-2 p-2 bg-black bg-opacity-50 text-xs overflow-auto">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+        document.getElementById('results').classList.remove('hidden');
+        return;
+    }
+    
+    // Sort predictions by time horizon
+    const sortedPredictions = [...predictions].sort((a, b) => a.time_horizon_days - b.time_horizon_days);
+    
+    // Find closest approach
+    const closestPrediction = sortedPredictions.reduce((min, p) => 
+        p.distance_earth_radii < min.distance_earth_radii ? p : min
+    );
+    
+    // Determine risk level based on closest approach
+    let riskLevel = 'Low';
+    let riskColor = 'bg-green-600';
+    if (closestPrediction.distance_earth_radii < 5) {
+        riskLevel = 'EXTREME';
+        riskColor = 'bg-red-900';
+    } else if (closestPrediction.distance_earth_radii < 20) {
+        riskLevel = 'High';
+        riskColor = 'bg-red-600';
+    } else if (closestPrediction.distance_earth_radii < 50) {
+        riskLevel = 'Moderate';
+        riskColor = 'bg-orange-600';
+    } else if (closestPrediction.distance_earth_radii < 100) {
+        riskLevel = 'Low';
+        riskColor = 'bg-yellow-600';
+    }
+    
+    content.innerHTML = `
+        <div class="mb-6 p-4 ${riskColor} rounded-lg">
+            <h3 class="text-2xl font-bold">Impact Risk: ${riskLevel}</h3>
+            <p class="text-sm mt-2">Based on Keplerian orbital mechanics</p>
+        </div>
+        
+        <div class="bg-blue-900 p-6 rounded-lg mb-6">
+            <h3 class="text-xl font-bold mb-4">
+                <i class="fas fa-orbit mr-2"></i>Orbital Characteristics
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-300">Semi-major Axis</p>
+                    <p class="font-bold text-lg">${orbital.semi_major_axis_au.toFixed(3)} AU</p>
+                </div>
+                <div>
+                    <p class="text-gray-300">Eccentricity</p>
+                    <p class="font-bold text-lg">${orbital.eccentricity.toFixed(3)}</p>
+                </div>
+                <div>
+                    <p class="text-gray-300">Inclination</p>
+                    <p class="font-bold text-lg">${orbital.inclination_deg.toFixed(2)}°</p>
+                </div>
+                <div>
+                    <p class="text-gray-300">Orbital Period</p>
+                    <p class="font-bold text-lg">${orbital.orbital_period_years.toFixed(2)} years</p>
+                </div>
+                <div>
+                    <p class="text-gray-300">Perihelion</p>
+                    <p class="font-bold text-lg">${orbital.perihelion_au.toFixed(3)} AU</p>
+                </div>
+                <div>
+                    <p class="text-gray-300">Aphelion</p>
+                    <p class="font-bold text-lg">${orbital.aphelion_au.toFixed(3)} AU</p>
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-blue-800 rounded">
+                <p class="text-sm"><strong>Orbit Type:</strong> ${orbital.orbit_type}</p>
+            </div>
+        </div>
+        
+        <div class="bg-gray-700 p-6 rounded-lg mb-6">
+            <h3 class="text-xl font-bold mb-4">
+                <i class="fas fa-crosshairs mr-2"></i>Closest Approach Predictions
+            </h3>
+            <div class="space-y-3">
+                ${sortedPredictions.map(pred => {
+                    // Format the probability for display
+                    const prob = parseFloat(pred.impact_probability);
+                    let probText;
+                    if (prob === 0) {
+                        probText = '0%';
+                    } else if (prob < 0.0001) {
+                        probText = prob.toExponential(2) + '%';
+                    } else {
+                        probText = (prob * 100).toFixed(4) + '%';
+                    }
+                    
+                    return `
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-lg">${pred.time_horizon_days} Days</span>
+                            <span class="text-sm text-gray-400">${new Date(pred.closest_approach_time).toLocaleDateString()}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-400">Distance</p>
+                                <p class="font-bold ${pred.distance_earth_radii < 10 ? 'text-red-400' : 'text-green-400'}">
+                                    ${pred.distance_earth_radii.toFixed(1)} Earth Radii
+                                </p>
+                                <p class="text-xs text-gray-500">${(pred.distance_km / 1000).toFixed(0)} km</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400">Impact Probability</p>
+                                <p class="font-bold ${prob > 0.01 ? 'text-red-400' : prob > 0.001 ? 'text-orange-400' : 'text-yellow-400'}">
+                                    ${probText}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('')}
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-meteor mr-2"></i>Impact Energy</h4>
+                <p class="text-3xl font-bold text-yellow-400">${impact.impact_energy_megatons} MT</p>
+                <p class="text-sm text-gray-300 mt-2">
+                    ${impact.hiroshima_equivalent.toLocaleString()} × Hiroshima
+                </p>
+            </div>
+            
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-bold text-lg mb-2"><i class="fas fa-circle-notch mr-2"></i>Crater Size</h4>
+                <p class="text-3xl font-bold text-blue-400">${impact.crater_diameter_km} km</p>
+                <p class="text-sm text-gray-300 mt-2">Diameter if impact occurs</p>
+            </div>
+        </div>
+        
+        <div class="bg-gray-700 p-4 rounded-lg mb-6">
+            <h4 class="font-bold text-lg mb-3"><i class="fas fa-explosion mr-2"></i>Potential Blast Effects</h4>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span>Total Destruction:</span>
+                    <span class="font-bold text-red-400">${impact.blast_effects.total_destruction_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Severe Damage:</span>
+                    <span class="font-bold text-orange-400">${impact.blast_effects.severe_damage_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Moderate Damage:</span>
+                    <span class="font-bold text-yellow-400">${impact.blast_effects.moderate_damage_km} km</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Light Damage:</span>
+                    <span class="font-bold text-green-400">${impact.blast_effects.light_damage_km} km</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-purple-900 p-4 rounded-lg">
+            <h4 class="font-bold text-lg mb-2">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Keplerian Model Limitations
+            </h4>
+            <p class="text-sm text-gray-300 mb-3">
+                This pure Keplerian model assumes only solar gravity. Real asteroids are affected by:
+            </p>
+            <ul class="text-sm space-y-1 text-gray-300">
+                <li><i class="fas fa-chevron-right mr-2 text-xs"></i>Gravitational perturbations from planets (especially Jupiter)</li>
+                <li><i class="fas fa-chevron-right mr-2 text-xs"></i>Orbital resonances causing long-term changes</li>
+                <li><i class="fas fa-chevron-right mr-2 text-xs"></i>Yarkovsky effect (thermal radiation pressure)</li>
+                <li><i class="fas fa-chevron-right mr-2 text-xs"></i>Three-body problem complexities</li>
+            </ul>
+            <p class="text-xs text-gray-400 mt-3">
+                For accurate long-term predictions, numerical integration with perturbations is required.
+            </p>
+        </div>
+    `;
+    
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

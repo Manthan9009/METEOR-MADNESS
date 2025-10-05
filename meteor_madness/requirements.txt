@@ -1,0 +1,7 @@
+Django==5.2.7
+requests==2.31.0
+djangorestframework==3.14.0
+
+# Updated for Python 3.13 compatibility
+scikit-learn==1.5.2
+numpy==2.1.3

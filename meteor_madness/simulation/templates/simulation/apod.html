@@ -1,0 +1,12 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<h1 class="text-4xl font-bold mb-6">Astronomy Picture of the Day</h1>
+{% if apod %}
+<div class="bg-gray-800 p-6 rounded-lg">
+    <!-- <h2 class="text-2xl mb-4">{{ apod.title }}</h2> -->
+    <img src="{{ apod.url }}" alt="{{ apod.title }}" class="w-full rounded-lg mb-4">
+    <p>{{ apod.explanation }}</p>
+</div>
+{% endif %}
+{% endblock %}

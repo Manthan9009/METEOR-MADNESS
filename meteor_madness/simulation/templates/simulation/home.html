@@ -1,0 +1,16 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<div class="text-center py-16">
+    <h1 class="orbitron text-6xl font-bold mb-4">Welcome to Meteor Madness</h1>
+    <p class="text-xl text-gray-300 mb-8">Track Near-Earth Objects with NASA's API</p>
+    <div class="flex justify-center gap-4">
+        <a href="{% url 'fetch_asteroids' %}" class="bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-lg text-lg font-bold">
+            <i class="fas fa-download mr-2"></i>Fetch Asteroids
+        </a>
+        <a href="{% url 'asteroid_list' %}" class="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-lg text-lg font-bold">
+            <i class="fas fa-list mr-2"></i>View List
+        </a>
+    </div>
+</div>
+{% endblock %}

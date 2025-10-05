@@ -1,0 +1,118 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-4xl font-bold">Asteroids ({{ total_count }})</h1>
+    <a href="{% url 'fetch_asteroids' %}" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-2 rounded-lg font-bold">
+        <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+    </a>
+</div>
+
+<!-- Filter Section -->
+<div class="bg-gray-800 p-4 rounded-lg mb-6">
+    <h2 class="text-xl font-semibold mb-4">Filter Asteroids</h2>
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Hazardous Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Hazardous Status</label>
+            <select name="hazardous" class="w-full bg-gray-700 text-white rounded-lg p-2">
+                <option value="">All Asteroids</option>
+                <option value="true" {% if current_filters.hazardous == 'true' %}selected{% endif %}>Potentially Hazardous Only</option>
+                <option value="false" {% if current_filters.hazardous == 'false' %}selected{% endif %}>Non-Hazardous Only</option>
+            </select>
+        </div>
+        
+        <!-- Miss Distance Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Max Miss Distance (M km)</label>
+            <input type="number" name="max_miss_distance" 
+                   value="{{ current_filters.max_miss_distance|default:'' }}" 
+                   placeholder="e.g., 10" 
+                   class="w-full bg-gray-700 text-white rounded-lg p-2"
+                   min="0" step="0.1">
+        </div>
+        
+        <!-- Impact Risk Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Impact Risk</label>
+            <select name="impact_risk" class="w-full bg-gray-700 text-white rounded-lg p-2">
+                <option value="">All Risks</option>
+                <option value="high" {% if current_filters.impact_risk == 'high' %}selected{% endif %}>
+                    High Impact Risk
+                </option>
+            </select>
+        </div>
+        
+        <!-- Filter Buttons -->
+        <div class="md:col-span-3 flex gap-2">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold">
+                <i class="fas fa-filter mr-2"></i>Apply Filters
+            </button>
+            <a href="{% url 'asteroid_list' %}" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold">
+                <i class="fas fa-times mr-2"></i>Clear Filters
+            </a>
+        </div>
+    </form>
+</div>
+{% if current_filters.impact_risk == 'high' %}
+<div class="bg-yellow-900/30 border-l-4 border-yellow-500 p-4 mb-6 rounded-r">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-yellow-300">
+                <strong>High Impact Risk Warning:</strong> These asteroids have been identified as having a higher probability of Earth impact based on their trajectory and velocity.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid gap-4">
+    {% for asteroid in asteroids %}
+    <div class="bg-gray-800 p-6 rounded-lg card-hover">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+                <h3 class="text-xl font-bold mb-2">{{ asteroid.name }}</h3>
+                <p class="text-gray-300"><i class="fas fa-calendar mr-2"></i>Date: {{ asteroid.close_approach_date }}</p>
+                <p class="text-gray-300"><i class="fas fa-ruler mr-2"></i>Diameter: {{ asteroid.estimated_diameter_min_km|floatformat:3 }} - {{ asteroid.estimated_diameter_max_km|floatformat:3 }} km</p>
+                <p class="text-gray-300"><i class="fas fa-tachometer-alt mr-2"></i>Velocity: {{ asteroid.relative_velocity_kmh|floatformat:0 }} km/h</p>
+                <p class="text-gray-300">
+    <i class="fas fa-arrows-alt-h mr-2"></i>Miss Distance: 
+    <span class="{% if asteroid.miss_distance_km < 1000000 %}text-yellow-400 font-semibold{% endif %}">
+        {{ asteroid.miss_distance_km|floatformat:0 }} km
+        {% if asteroid.miss_distance_km < 1000000 %}(Close Approach){% endif %}
+    </span>
+</p>
+            </div>
+            <div class="flex flex-col gap-2">
+                {% if asteroid.is_potentially_hazardous %}
+                <span class="bg-red-500 px-3 py-1 rounded text-sm font-bold hazard-badge">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>HAZARDOUS
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+            <a href="{% url 'asteroid_detail' asteroid.neo_id %}" 
+               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+                <i class="fas fa-info-circle mr-1"></i>Details
+            </a>
+            <a href="{% url 'simulator' %}?asteroid_id={{ asteroid.neo_id }}" 
+               class="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+                <i class="fas fa-rocket mr-1"></i>Simulate Impact
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-gray-800 p-8 rounded-lg text-center">
+        <i class="fas fa-satellite-dish text-6xl text-gray-600 mb-4"></i>
+        <p class="text-xl mb-4">No asteroids found.</p>
+        <a href="{% url 'fetch_asteroids' %}" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 py-3 rounded-lg font-bold">
+            <i class="fas fa-download mr-2"></i>Fetch Data from NASA
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

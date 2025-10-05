@@ -1,0 +1,98 @@
+{% extends 'simulation/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <a href="{% url 'earthquake_list' %}" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Earthquakes
+    </a>
+    
+    <div class="bg-gray-800 rounded-lg p-8 mb-6">
+        <div class="flex items-center gap-4 mb-6">
+            <span class="text-5xl font-bold {% if earthquake.magnitude >= 7 %}text-red-500{% elif earthquake.magnitude >= 6 %}text-orange-500{% elif earthquake.magnitude >= 5 %}text-yellow-500{% else %}text-green-500{% endif %}">
+                M{{ earthquake.magnitude }}
+            </span>
+            {% if earthquake.tsunami %}
+            <span class="bg-blue-600 px-4 py-2 rounded-lg text-lg font-bold animate-pulse">
+                <i class="fas fa-water mr-2"></i>TSUNAMI WARNING
+            </span>
+            {% endif %}
+        </div>
+        
+        <h1 class="text-3xl font-bold mb-6">{{ earthquake.place }}</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3"><i class="fas fa-info-circle mr-2"></i>Event Details</h3>
+                <div class="space-y-2">
+                    <p><strong>Time:</strong> {{ earthquake.time|date:"Y-m-d H:i:s" }} UTC</p>
+                    <p><strong>USGS ID:</strong> {{ earthquake.usgs_id }}</p>
+                    <p><strong>Magnitude:</strong> {{ earthquake.magnitude }}</p>
+                    <p><strong>Depth:</strong> {{ earthquake.depth_km|floatformat:2 }} km</p>
+                    {% if earthquake.alert_level %}
+                    <p><strong>Alert Level:</strong> <span class="text-red-400">{{ earthquake.alert_level|upper }}</span></p>
+                    {% endif %}
+                    {% if earthquake.felt_reports %}
+                    <p><strong>Felt Reports:</strong> {{ earthquake.felt_reports }}</p>
+                    {% endif %}
+                    {% if earthquake.significance %}
+                    <p><strong>Significance:</strong> {{ earthquake.significance }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-3"><i class="fas fa-map-marker-alt mr-2"></i>Location</h3>
+                <div class="space-y-2">
+                    <p><strong>Latitude:</strong> {{ earthquake.latitude|floatformat:4 }}°</p>
+                    <p><strong>Longitude:</strong> {{ earthquake.longitude|floatformat:4 }}°</p>
+                    <p><strong>Place:</strong> {{ earthquake.place }}</p>
+                </div>
+            </div>
+        </div>
+        
+        {% if earthquake.url %}
+        <div class="mt-6">
+            <a href="{{ earthquake.url }}" target="_blank" 
+               class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold inline-block">
+                <i class="fas fa-external-link-alt mr-2"></i>View Full USGS Report
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-gray-800 rounded-lg p-8 mb-6">
+        <h2 class="text-2xl font-bold mb-4"><i class="fas fa-shield-alt mr-2"></i>Location Risk Assessment</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="font-bold mb-2"><i class="fas fa-wave-square mr-2"></i>Seismic Zone</h3>
+                <p><strong>Zone:</strong> {{ location_info.seismic_zone.zone_name }}</p>
+                <p><strong>Risk Level:</strong> 
+                    <span class="{% if location_info.seismic_zone.seismic_risk == 'Very High' %}text-red-500{% elif location_info.seismic_zone.seismic_risk == 'High' %}text-orange-500{% elif location_info.seismic_zone.seismic_risk == 'Moderate' %}text-yellow-500{% else %}text-green-500{% endif %} font-bold">
+                        {{ location_info.seismic_zone.seismic_risk }}
+                    </span>
+                </p>
+            </div>
+            
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h3 class="font-bold mb-2"><i class="fas fa-water mr-2"></i>Tsunami Zone</h3>
+                <p><strong>Region:</strong> {{ location_info.tsunami_zone.ocean_region }}</p>
+                <p><strong>Tsunami Risk:</strong> 
+                    <span class="{% if location_info.tsunami_zone.tsunami_risk == 'Very High' %}text-red-500{% elif location_info.tsunami_zone.tsunami_risk == 'High' %}text-orange-500{% elif location_info.tsunami_zone.tsunami_risk == 'Moderate' %}text-yellow-500{% else %}text-green-500{% endif %} font-bold">
+                        {{ location_info.tsunami_zone.tsunami_risk }}
+                    </span>
+                </p>
+                <p class="text-sm text-gray-300 mt-2">{{ location_info.tsunami_zone.reason }}</p>
+            </div>
+        </div>
+        
+        <div class="mt-6 p-4 bg-gray-700 rounded-lg">
+            <p><strong>Overall Risk:</strong> 
+                <span class="text-xl {% if location_info.overall_risk == 'Very High' %}text-red-500{% elif location_info.overall_risk == 'High' %}text-orange-500{% elif location_info.overall_risk == 'Moderate' %}text-yellow-500{% else %}text-green-500{% endif %} font-bold">
+                    {{ location_info.overall_risk }}
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
